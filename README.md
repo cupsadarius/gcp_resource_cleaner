@@ -1,6 +1,7 @@
 ### GCP Resource Cleaner
 
 This is a simple tool that can be used to clean up GCP resources. It can be used to delete unused resources, or to clean up resources that are no longer needed.
+This tool will build a tree of GCP resources starting fromt he root folder then traverse the tree post-order and start to delete from the bottom up.
 
 ### Features
 
