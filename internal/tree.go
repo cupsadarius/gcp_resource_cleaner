@@ -8,20 +8,20 @@ import (
 	"github.com/cupsadarius/gcp_resource_cleaner/pkg/logger"
 )
 
-func getStructure(ctx context.Context, rootFolderId string) *models.Tree {
+func getStructure(ctx context.Context, rootFolderId string, executor gcp.CommandExecutor) *models.Tree {
 	tree := models.NewTree()
 
-	tree.Root = getTree(ctx, rootFolderId)
+	tree.Root = getTree(ctx, rootFolderId, executor)
 
 	return tree
 }
 
-func getTree(ctx context.Context, rootFolderId string) *models.Node {
+func getTree(ctx context.Context, rootFolderId string, executor gcp.CommandExecutor) *models.Node {
 	log := logger.New(appID, "getStructure")
 	log.DebugWithExtra("getStructure", map[string]any{
 		"rootFolderId": rootFolderId,
 	})
-	projects, err := gcp.GetProjects(ctx, rootFolderId)
+	projects, err := gcp.GetProjects(ctx, rootFolderId, executor)
 	if err != nil {
 		log.Error("Failed to get projects", err)
 		return nil
@@ -29,13 +29,13 @@ func getTree(ctx context.Context, rootFolderId string) *models.Node {
 
 	node := models.NewNode(rootFolderId, projects)
 
-	folders, err := gcp.GetFolders(ctx, rootFolderId)
+	folders, err := gcp.GetFolders(ctx, rootFolderId, executor)
 	if err != nil {
 		log.Error("Failed to get folders", err)
 		return node
 	}
 	for _, folder := range folders {
-		node.Children = append(node.Children, getTree(ctx, folder))
+		node.Children = append(node.Children, getTree(ctx, folder, executor))
 	}
 
 	return node

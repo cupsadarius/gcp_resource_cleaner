@@ -3,13 +3,12 @@ package gcp
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"strings"
 
 	"github.com/cupsadarius/gcp_resource_cleaner/pkg/logger"
 )
 
-func GetProjects(rootCtx context.Context, rootFolderId string) ([]string, error) {
+func GetProjects(rootCtx context.Context, rootFolderId string, executor CommandExecutor) ([]string, error) {
 	ctx, cancelFunc := context.WithCancel(rootCtx)
 	defer cancelFunc()
 
@@ -25,8 +24,7 @@ func GetProjects(rootCtx context.Context, rootFolderId string) ([]string, error)
 			"csv[no-heading](projectId)",
 		},
 	})
-	cmd := exec.CommandContext(ctx, "gcloud", "projects", "list", "--filter", fmt.Sprintf("parent.id:%s", rootFolderId), "--format", "csv[no-heading](projectId)")
-	out, err := cmd.CombinedOutput()
+	out, err := executor.ExecuteCommand(ctx, "gcloud", "projects", "list", "--filter", fmt.Sprintf("parent.id:%s", rootFolderId), "--format", "csv[no-heading](projectId)")
 	if err != nil {
 		log.Error("Failed to run command", err)
 		return nil, err
@@ -54,7 +52,7 @@ func GetProjects(rootCtx context.Context, rootFolderId string) ([]string, error)
 	return result, nil
 }
 
-func DeleteProject(rootCtx context.Context, projectId string, dryRun bool) error {
+func DeleteProject(rootCtx context.Context, projectId string, dryRun bool, executor CommandExecutor) error {
 	ctx, cancelFunc := context.WithCancel(rootCtx)
 	defer cancelFunc()
 
@@ -72,8 +70,7 @@ func DeleteProject(rootCtx context.Context, projectId string, dryRun bool) error
 		return nil
 	}
 
-	cmd := exec.CommandContext(ctx, "gcloud", "projects", "delete", projectId, "--quiet")
-	out, err := cmd.CombinedOutput()
+	out, err := executor.ExecuteCommand(ctx, "gcloud", "projects", "delete", projectId, "--quiet")
 	if err != nil {
 		log.Error("Failed to run command", err)
 		return err

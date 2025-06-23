@@ -2,20 +2,18 @@ package gcp
 
 import (
 	"context"
-	"os/exec"
 	"strings"
 
 	"github.com/cupsadarius/gcp_resource_cleaner/pkg/logger"
 )
 
-func CheckHealth(rootCtx context.Context) {
+func CheckHealth(rootCtx context.Context, executor CommandExecutor) {
 	ctx, cancelFunc := context.WithCancel(rootCtx)
 	defer cancelFunc()
 
 	log := logger.New("gcp", "CheckHealth")
-	cmd := exec.CommandContext(ctx, "gcloud", "version")
+	out, err := executor.ExecuteCommand(ctx, "gcloud", "version")
 
-	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Error("Failed to run command", err)
 	}

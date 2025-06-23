@@ -19,9 +19,9 @@ mod-tidy:
 # install all dependencies used by the application
 deps:
 	go get -v -d ./...
-	go get -u golang.org/x/lint/golint
-	go get github.com/smartystreets/goconvey
-	go get github.com/securego/gosec/cmd/gosec
+	go install golang.org/x/lint/golint@latest
+	go install github.com/smartystreets/goconvey@latest
+	go install github.com/securego/gosec/cmd/gosec@latest
 
 # install the application in the Go bin/ folder
 install:

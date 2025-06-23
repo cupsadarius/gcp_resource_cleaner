@@ -22,10 +22,18 @@ all resources from bottom up given a starting folder id.`
 var rootFolderId string
 var dryRun bool
 
+// Create the real executor
+var executor gcp.CommandExecutor = &gcp.GCloudExecutor{}
+
+// Allow test injection
+func SetExecutor(exec gcp.CommandExecutor) {
+	executor = exec
+}
+
 func Run(ctx context.Context) error {
 	cli.Init(appID, shortDesc, longDesc)
 	_ = cli.AddCommand("version", "Get the application version and Git commit SHA", logVersionDetails)
-	_ = cli.AddCommand("check-health", "Check if we have the required tools installed", gcp.CheckHealth)
+	_ = cli.AddCommand("check-health", "Check if we have the required tools installed", checkHealth)
 	_ = cli.AddCommand("delete", "Delete all resources from a given folder", deleteResources)
 	cli.AssignStringFlag(&rootFolderId, "folder-id", "", "Root folder id to start from")
 	cli.AssignBoolFlag(&dryRun, "dry-run", false, "Dry run mode")
@@ -36,6 +44,10 @@ func Run(ctx context.Context) error {
 		Format: "pretty",
 	})
 	return cli.Run(ctx)
+}
+
+func checkHealth(rootCtx context.Context) {
+	gcp.CheckHealth(rootCtx, executor)
 }
 
 func deleteResources(rootCtx context.Context) {
@@ -49,7 +61,7 @@ func deleteResources(rootCtx context.Context) {
 		return
 	}
 
-	tree := getStructure(ctx, rootFolderId)
+	tree := getStructure(ctx, rootFolderId, executor)
 	traversed := tree.PostOrderTraversal(tree.Root)
 	log.DebugWithExtra("traversed", map[string]any{
 		"traversed": traversed,
@@ -58,12 +70,12 @@ func deleteResources(rootCtx context.Context) {
 	for _, entry := range traversed {
 		switch entry.Type {
 		case models.EntryTypeProject:
-			err := gcp.DeleteProject(ctx, entry.Id, dryRun)
+			err := gcp.DeleteProject(ctx, entry.Id, dryRun, executor)
 			if err != nil {
 				log.Error("Failed to delete project", err)
 			}
 		case models.EntryTypeFolder:
-			err := gcp.DeleteFolder(ctx, entry.Id, dryRun)
+			err := gcp.DeleteFolder(ctx, entry.Id, dryRun, executor)
 			if err != nil {
 				log.Error("Failed to delete folder", err)
 			}
