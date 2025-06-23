@@ -33,8 +33,8 @@ func TestDefaultValues(t *testing.T) {
 	// We can't really test the "unset" state in unit tests since the variables
 	// are package-level globals, but we can test that they're strings
 
-	var appVersionType string = AppVersion
-	var gitCommitType string = GitCommit
+	var appVersionType = AppVersion
+	var gitCommitType = GitCommit
 
 	// This test mainly ensures the variables exist and are the right type
 	_ = appVersionType

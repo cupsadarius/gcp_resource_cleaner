@@ -59,7 +59,7 @@ func TestErrorTypes(t *testing.T) {
 
 func TestErrorComparison(t *testing.T) {
 	// Test that errors can be compared using errors.Is
-	var err error = ErrNotInitialized
+	var err = ErrNotInitialized
 
 	if !errors.Is(err, ErrNotInitialized) {
 		t.Error("ErrNotInitialized should match itself using errors.Is")
