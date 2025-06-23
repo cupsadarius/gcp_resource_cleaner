@@ -11,7 +11,7 @@ This is a simple tool that can be used to clean up GCP resources. It can be used
 To install the tool, you can use the following command:
 
 ```
-go install github.com/cupsadarius/gcp_resource_cleaner
+go install github.com/cupsadarius/gcp_resource_cleaner@latest
 ```
 
 ### Usage
