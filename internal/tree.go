@@ -3,9 +3,9 @@ package internal
 import (
 	"context"
 
-	"github.com/cupsadarius/gcp-resource-cleaner/models"
-	"github.com/cupsadarius/gcp-resource-cleaner/pkg/gcp"
-	"github.com/cupsadarius/gcp-resource-cleaner/pkg/logger"
+	"github.com/cupsadarius/gcp_resource_cleaner/models"
+	"github.com/cupsadarius/gcp_resource_cleaner/pkg/gcp"
+	"github.com/cupsadarius/gcp_resource_cleaner/pkg/logger"
 )
 
 func getStructure(ctx context.Context, rootFolderId string) *models.Tree {

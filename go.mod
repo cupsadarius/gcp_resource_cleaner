@@ -1,4 +1,4 @@
-module github.com/cupsadarius/gcp-resource-cleaner
+module github.com/cupsadarius/gcp_resource_cleaner
 
 go 1.24.4
 

@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/cupsadarius/gcp-resource-cleaner/pkg/logger"
+	"github.com/cupsadarius/gcp_resource_cleaner/pkg/logger"
 )
 
 func CheckHealth(rootCtx context.Context) {

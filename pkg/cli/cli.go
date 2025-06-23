@@ -3,7 +3,7 @@ package cli
 import (
 	"context"
 
-	"github.com/cupsadarius/gcp-resource-cleaner/pkg/errors"
+	"github.com/cupsadarius/gcp_resource_cleaner/pkg/errors"
 	"github.com/spf13/cobra"
 )
 

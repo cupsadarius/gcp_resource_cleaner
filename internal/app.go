@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cupsadarius/gcp-resource-cleaner/models"
-	"github.com/cupsadarius/gcp-resource-cleaner/pkg/cli"
-	"github.com/cupsadarius/gcp-resource-cleaner/pkg/gcp"
-	"github.com/cupsadarius/gcp-resource-cleaner/pkg/logger"
-	"github.com/cupsadarius/gcp-resource-cleaner/pkg/version"
+	"github.com/cupsadarius/gcp_resource_cleaner/models"
+	"github.com/cupsadarius/gcp_resource_cleaner/pkg/cli"
+	"github.com/cupsadarius/gcp_resource_cleaner/pkg/gcp"
+	"github.com/cupsadarius/gcp_resource_cleaner/pkg/logger"
+	"github.com/cupsadarius/gcp_resource_cleaner/pkg/version"
 )
 
-const appID = "gcp-resource-cleaner"
+const appID = "gcp_resource_cleaner"
 const shortDesc = "CLI Tool for cleaning up GCP resources"
-const longDesc = `Gcp-resource-cleaner is a CLI tool for cleaning up GCP resources.
+const longDesc = `gcp_resource_cleaner is a CLI tool for cleaning up GCP resources.
 
 Since GCP prevents you from deleting resources that are in use,
 this tool recursively traverses the GCP resource tree and deletes
