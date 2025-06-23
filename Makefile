@@ -8,7 +8,7 @@ build:
 	mkdir -p build
 	# gofmt -w ./
 	# go vet
-	go build -o build/gcp_resource_cleaner cmd/*.go
+	go build -o build/gcp_resource_cleaner main.go
 
 clean:
 	rm -rfv build

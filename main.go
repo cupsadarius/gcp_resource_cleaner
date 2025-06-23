@@ -36,5 +36,3 @@ func main() {
 	cancelFunc()
 	wg.Wait()
 }
-
-// Execute adds all child commands to the root command and sets flags appropriately.
