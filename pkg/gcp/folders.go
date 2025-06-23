@@ -53,8 +53,8 @@ func GetFolders(rootCtx context.Context, rootFolderId string) ([]string, error) 
 	return result, nil
 }
 
-func DeleteFolder(ctx context.Context, folderId string, dryRun bool) error {
-	ctx, cancelFunc := context.WithCancel(ctx)
+func DeleteFolder(rootCtx context.Context, folderId string, dryRun bool) error {
+	ctx, cancelFunc := context.WithCancel(rootCtx)
 	defer cancelFunc()
 
 	log := logger.New("gcp", "DeleteFolder")

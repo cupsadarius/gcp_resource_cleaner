@@ -31,7 +31,7 @@ func Run(ctx context.Context) error {
 	cli.AssignBoolFlag(&dryRun, "dry-run", false, "Dry run mode")
 
 	logger.Init(logger.Config{
-		Level:  "info",
+		Level:  "debug",
 		Source: appID,
 		Format: "pretty",
 	})

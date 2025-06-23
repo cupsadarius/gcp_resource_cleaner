@@ -54,8 +54,8 @@ func GetProjects(rootCtx context.Context, rootFolderId string) ([]string, error)
 	return result, nil
 }
 
-func DeleteProject(ctx context.Context, projectId string, dryRun bool) error {
-	ctx, cancelFunc := context.WithCancel(ctx)
+func DeleteProject(rootCtx context.Context, projectId string, dryRun bool) error {
+	ctx, cancelFunc := context.WithCancel(rootCtx)
 	defer cancelFunc()
 
 	log := logger.New("gcp", "DeleteProject")
