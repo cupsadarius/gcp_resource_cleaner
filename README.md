@@ -32,7 +32,7 @@ This will check the health of the GCP resources and print out any issues that ne
 You can also run the tool with the following command to delete unused resources:
 
 ```
-gcp_resource_cleaner delete --folder-id=<folder-id> --dry-run <dry-run>
+gcp_resource_cleaner delete --folder-id <folder-id> --dry-run <dry-run>
 ```
 
 This will delete unused resources and print out the resources that will be deleted. You can then review the list and decide whether to proceed with the deletion.
@@ -40,7 +40,7 @@ This will delete unused resources and print out the resources that will be delet
 If you want to delete resources without a dry run, you can use the following command:
 
 ```
-gcp_resource_cleaner delete --folder-id=<folder-id>
+gcp_resource_cleaner delete --folder-id <folder-id>
 ```
 
 This will delete unused resources without a dry run.
