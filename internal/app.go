@@ -45,15 +45,11 @@ func Run(ctx context.Context) error {
 	cli.AssignStringFlag(&logFormat, "log-format", "pretty", "Log format (pretty, json)")
 	cli.AssignBoolFlag(&dryRun, "dry-run", false, "Dry run mode")
 
-	if valid := validateLogLevel(logLevel); !valid {
-		return fmt.Errorf("invalid log level: %s", logLevel)
-	}
-
 	return cli.Run(ctx)
 } // Updated helper function with format support
 
-func initLogger() error {
-	if valid := validateLogLevel(logLevel); !valid {
+func initLogger(level string) error {
+	if valid := validateLogLevel(level); !valid {
 		return fmt.Errorf("invalid log level: %s", logLevel)
 	}
 	if valid := validateLogFormat(logFormat); !valid {
@@ -80,12 +76,12 @@ func validateLogFormat(format string) bool {
 }
 
 func checkHealth(rootCtx context.Context) {
-	_ = initLogger()
+	_ = initLogger("info")
 	gcp.CheckHealth(rootCtx, executor)
 }
 
 func printTree(rootCtx context.Context) {
-	_ = initLogger()
+	_ = initLogger(logLevel)
 	ctx, cancelFunc := context.WithCancel(rootCtx)
 	defer cancelFunc()
 
@@ -102,7 +98,7 @@ func printTree(rootCtx context.Context) {
 }
 
 func deleteResources(rootCtx context.Context) {
-	_ = initLogger()
+	_ = initLogger(logLevel)
 	ctx, cancelFunc := context.WithCancel(rootCtx)
 	defer cancelFunc()
 
@@ -140,7 +136,7 @@ func deleteResources(rootCtx context.Context) {
 }
 
 func logVersionDetails(_ context.Context) {
-	_ = initLogger()
+	_ = initLogger("info")
 	log := logger.New(appID, "logVersionDetails")
 	log.Info(fmt.Sprintf("AppVersion=%s, GitCommit=%s", version.AppVersion, version.GitCommit))
 }
