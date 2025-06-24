@@ -24,9 +24,7 @@ func (t *Tree) PostOrderTraversal(node *Node) []Entry {
 	for _, node := range node.Children {
 		result = append(result, t.PostOrderTraversal(node)...)
 	}
-	for _, child := range node.Values {
-		result = append(result, child)
-	}
+	result = append(result, node.Values...)
 	result = append(result, *node.Current)
 
 	return result
