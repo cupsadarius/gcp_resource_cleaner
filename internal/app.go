@@ -3,6 +3,8 @@ package internal
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/cupsadarius/gcp_resource_cleaner/models"
 	"github.com/cupsadarius/gcp_resource_cleaner/pkg/cli"
@@ -21,6 +23,8 @@ all resources from bottom up given a starting folder id.`
 
 var rootFolderId string
 var dryRun bool
+var logLevel string
+var logFormat string
 
 // Create the real executor
 var executor gcp.CommandExecutor = &gcp.GCloudExecutor{}
@@ -35,22 +39,70 @@ func Run(ctx context.Context) error {
 	_ = cli.AddCommand("version", "Get the application version and Git commit SHA", logVersionDetails)
 	_ = cli.AddCommand("check-health", "Check if we have the required tools installed", checkHealth)
 	_ = cli.AddCommand("delete", "Delete all resources from a given folder", deleteResources)
+	_ = cli.AddCommand("print", "Print the resource tree", printTree)
 	cli.AssignStringFlag(&rootFolderId, "folder-id", "", "Root folder id to start from")
+	cli.AssignStringFlag(&logLevel, "log-level", "info", "Log level (trace, debug, info, warn, error, fatal, panic)")
+	cli.AssignStringFlag(&logFormat, "log-format", "pretty", "Log format (pretty, json)")
 	cli.AssignBoolFlag(&dryRun, "dry-run", false, "Dry run mode")
 
-	logger.Init(logger.Config{
-		Level:  "debug",
-		Source: appID,
-		Format: "pretty",
-	})
+	if valid := validateLogLevel(logLevel); !valid {
+		return fmt.Errorf("invalid log level: %s", logLevel)
+	}
+
 	return cli.Run(ctx)
+} // Updated helper function with format support
+
+func initLogger() error {
+	if valid := validateLogLevel(logLevel); !valid {
+		return fmt.Errorf("invalid log level: %s", logLevel)
+	}
+	if valid := validateLogFormat(logFormat); !valid {
+		return fmt.Errorf("invalid log format: %s", logFormat)
+	}
+	logger.Init(logger.Config{
+		Level:  logLevel,
+		Source: appID,
+		Format: logFormat,
+	})
+
+	return nil
+}
+
+func validateLogLevel(level string) bool {
+	validLevels := []string{"trace", "debug", "info", "warn", "error", "fatal", "panic"}
+	level = strings.ToLower(level)
+	return slices.Contains(validLevels, level)
+}
+func validateLogFormat(format string) bool {
+	validFormats := []string{"pretty", "json"}
+	format = strings.ToLower(format)
+	return slices.Contains(validFormats, format)
 }
 
 func checkHealth(rootCtx context.Context) {
+	_ = initLogger()
 	gcp.CheckHealth(rootCtx, executor)
 }
 
+func printTree(rootCtx context.Context) {
+	_ = initLogger()
+	ctx, cancelFunc := context.WithCancel(rootCtx)
+	defer cancelFunc()
+
+	log := logger.New(appID, "printTree")
+
+	if rootFolderId == "" {
+		log.Error("rootFolderId is empty")
+		return
+	}
+
+	tree := getStructure(ctx, rootFolderId, executor)
+	tree.Print()
+
+}
+
 func deleteResources(rootCtx context.Context) {
+	_ = initLogger()
 	ctx, cancelFunc := context.WithCancel(rootCtx)
 	defer cancelFunc()
 
@@ -62,6 +114,9 @@ func deleteResources(rootCtx context.Context) {
 	}
 
 	tree := getStructure(ctx, rootFolderId, executor)
+
+	tree.Print()
+
 	traversed := tree.PostOrderTraversal(tree.Root)
 	log.DebugWithExtra("traversed", map[string]any{
 		"traversed": traversed,
@@ -85,6 +140,7 @@ func deleteResources(rootCtx context.Context) {
 }
 
 func logVersionDetails(_ context.Context) {
+	_ = initLogger()
 	log := logger.New(appID, "logVersionDetails")
 	log.Info(fmt.Sprintf("AppVersion=%s, GitCommit=%s", version.AppVersion, version.GitCommit))
 }

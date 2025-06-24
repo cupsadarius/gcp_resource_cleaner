@@ -1,5 +1,11 @@
 package models
 
+import (
+	"fmt"
+
+	"github.com/xlab/treeprint"
+)
+
 type Tree struct {
 	Root *Node `json:"root"`
 }
@@ -29,6 +35,7 @@ func (t *Tree) PostOrderTraversal(node *Node) []Entry {
 }
 
 func (t *Tree) Print() {
-	t.Root.Print()
+	root := treeprint.New()
+	t.Root.Print(root)
+	fmt.Println(root.String())
 }
-
