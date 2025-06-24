@@ -6,43 +6,50 @@ import (
 
 func TestNewEntry(t *testing.T) {
 	tests := []struct {
-		name      string
+		testName  string
 		id        string
+		name      string
 		entryType EntryType
 		expected  *Entry
 	}{
 		{
-			name:      "create project entry",
+			testName:  "create project entry",
 			id:        "test-project-123",
+			name:      "Test Project 123",
 			entryType: EntryTypeProject,
 			expected: &Entry{
 				Type: EntryTypeProject,
 				Id:   "test-project-123",
+				Name: "Test Project 123",
 			},
 		},
 		{
-			name:      "create folder entry",
+			testName:  "create folder entry",
 			id:        "test-folder-456",
+			name:      "Test Folder 456",
 			entryType: EntryTypeFolder,
 			expected: &Entry{
 				Type: EntryTypeFolder,
 				Id:   "test-folder-456",
+				Name: "Test Folder 456",
 			},
 		},
 		{
-			name:      "empty id",
+			testName:  "empty id",
 			id:        "",
+			name:      "",
 			entryType: EntryTypeProject,
 			expected: &Entry{
 				Type: EntryTypeProject,
 				Id:   "",
+				Name: "",
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			entry := NewEntry(tt.id, tt.entryType)
+		t.Run(tt.testName, func(t *testing.T) {
+			entry := NewEntry(tt.id, tt.name, tt.entryType)
 
 			if entry.Type != tt.expected.Type {
 				t.Errorf("Expected type %d, got %d", tt.expected.Type, entry.Type)
@@ -50,6 +57,9 @@ func TestNewEntry(t *testing.T) {
 
 			if entry.Id != tt.expected.Id {
 				t.Errorf("Expected id %s, got %s", tt.expected.Id, entry.Id)
+			}
+			if entry.Name != tt.expected.Name {
+				t.Errorf("Expected id %s, got %s", tt.expected.Name, entry.Name)
 			}
 		})
 	}

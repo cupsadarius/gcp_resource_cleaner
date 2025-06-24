@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cupsadarius/gcp_resource_cleaner/models"
 	"github.com/cupsadarius/gcp_resource_cleaner/pkg/logger"
 )
 
-func GetProjects(rootCtx context.Context, rootFolderId string, executor CommandExecutor) ([]string, error) {
+func GetProjects(rootCtx context.Context, rootFolderId string, executor CommandExecutor) ([]models.Entry, error) {
 	ctx, cancelFunc := context.WithCancel(rootCtx)
 	defer cancelFunc()
 
@@ -21,10 +22,10 @@ func GetProjects(rootCtx context.Context, rootFolderId string, executor CommandE
 			"--filter",
 			fmt.Sprintf("parent.id:%s", rootFolderId),
 			"--format",
-			"csv[no-heading](projectId)",
+			"csv[no-heading](projectId,name)",
 		},
 	})
-	out, err := executor.ExecuteCommand(ctx, "gcloud", "projects", "list", "--filter", fmt.Sprintf("parent.id:%s", rootFolderId), "--format", "csv[no-heading](projectId)")
+	out, err := executor.ExecuteCommand(ctx, "gcloud", "projects", "list", "--filter", fmt.Sprintf("parent.id:%s", rootFolderId), "--format", "csv[no-heading](projectId,name)")
 	if err != nil {
 		log.Error("Failed to run command", err)
 		return nil, err
@@ -36,11 +37,13 @@ func GetProjects(rootCtx context.Context, rootFolderId string, executor CommandE
 		})
 		return nil, nil
 	}
-	result := make([]string, 0)
+	result := make([]models.Entry, 0)
 	trimmed := strings.Trim(string(out), "\n")
 	for line := range strings.SplitSeq(trimmed, "\n") {
 		if line != "" {
-			result = append(result, strings.Trim(line, "\n"))
+			vals := strings.Split(strings.Trim(line, "\n"), ",")
+			entry := models.NewEntry(vals[1], vals[0], models.EntryTypeProject)
+			result = append(result, *entry)
 		}
 	}
 

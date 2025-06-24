@@ -2,7 +2,6 @@ package logger
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -128,7 +127,7 @@ func TestLogger_Methods(t *testing.T) {
 	// Redirect log output to capture it
 	var buf bytes.Buffer
 	log.Logger = zerolog.New(&buf)
-	
+
 	// Set global log level to trace to capture all messages
 	originalLevel := zerolog.GlobalLevel()
 	zerolog.SetGlobalLevel(zerolog.TraceLevel)
@@ -138,7 +137,6 @@ func TestLogger_Methods(t *testing.T) {
 
 	// Test Info
 	logger.Info("info message")
-	fmt.Println(buf.String())
 	if !strings.Contains(buf.String(), "info message") {
 		t.Error("Info message not logged")
 	}
@@ -146,7 +144,6 @@ func TestLogger_Methods(t *testing.T) {
 
 	// Test Debug
 	logger.Debug("debug message")
-	fmt.Println(buf.String())
 	if !strings.Contains(buf.String(), "debug message") {
 		t.Error("Debug message not logged")
 	}
@@ -158,7 +155,6 @@ func TestLogger_Methods(t *testing.T) {
 		"key2": 42,
 	}
 	logger.DebugWithExtra("debug with extra", extra)
-	fmt.Println(buf.String())
 	output := buf.String()
 	if !strings.Contains(output, "debug with extra") {
 		t.Error("DebugWithExtra message not logged")
@@ -170,7 +166,6 @@ func TestLogger_Methods(t *testing.T) {
 
 	// Test Warn
 	logger.Warn("warn message")
-	fmt.Println(buf.String())
 	if !strings.Contains(buf.String(), "warn message") {
 		t.Error("Warn message not logged")
 	}

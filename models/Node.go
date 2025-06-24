@@ -1,27 +1,29 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/xlab/treeprint"
 )
 
 type Node struct {
-	Id       string   `json:"id"`
-	Values   []string `json:"values"`
-	Children []*Node  `json:"children"`
+	Current  *Entry
+	Values   []Entry
+	Children []*Node
 }
 
-func NewNode(id string, values []string) *Node {
+func NewNode(current *Entry, values []Entry) *Node {
 	return &Node{
-		Id:       id,
+		Current:  current,
 		Values:   values,
 		Children: make([]*Node, 0),
 	}
 }
 
 func (n *Node) Print(node treeprint.Tree) {
-	folder := node.AddBranch(n.Id)
+	folder := node.AddBranch(fmt.Sprintf("%s (%s)", n.Current.Name, n.Current.Id))
 	for _, value := range n.Values {
-		folder.AddNode(value)
+		folder.AddNode(fmt.Sprintf("%s (%s)", value.Name, value.Id))
 	}
 	for _, child := range n.Children {
 		child.Print(folder)

@@ -10,6 +10,7 @@ const (
 type Entry struct {
 	Type EntryType
 	Id   string
+	Name string
 }
 
 var EntryTypes = map[EntryType]string{
@@ -17,9 +18,10 @@ var EntryTypes = map[EntryType]string{
 	EntryTypeFolder:  "folder",
 }
 
-func NewEntry(id string, entryType EntryType) *Entry {
+func NewEntry(id, name string, entryType EntryType) *Entry {
 	return &Entry{
 		Type: entryType,
+		Name: name,
 		Id:   id,
 	}
 }

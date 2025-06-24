@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/cupsadarius/gcp_resource_cleaner/models"
 	"github.com/cupsadarius/gcp_resource_cleaner/pkg/logger"
 )
 
@@ -19,7 +20,7 @@ func init() {
 
 func TestGetProjects_Success(t *testing.T) {
 	mockExec := &MockExecutor{
-		MockOutput: []byte("project1\nproject2\nproject3\n"),
+		MockOutput: []byte("project1,Project 1\nproject2,Project 2\nproject3,Project 3\n"),
 		MockError:  nil,
 	}
 
@@ -30,14 +31,18 @@ func TestGetProjects_Success(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	expected := []string{"project1", "project2", "project3"}
+	expected := []models.Entry{
+		{Type: models.EntryTypeProject, Id: "Project 1", Name: "project1"},
+		{Type: models.EntryTypeProject, Id: "Project 2", Name: "project2"},
+		{Type: models.EntryTypeProject, Id: "Project 3", Name: "project3"},
+	}
 	if len(projects) != len(expected) {
 		t.Errorf("Expected %d projects, got %d", len(expected), len(projects))
 	}
 
 	for i, project := range projects {
-		if project != expected[i] {
-			t.Errorf("Expected project[%d] to be %s, got %s", i, expected[i], project)
+		if project.Id != expected[i].Id || project.Name != expected[i].Name {
+			t.Errorf("Expected project[%d] to be %+v, got %+v", i, expected[i], project)
 		}
 	}
 
@@ -51,7 +56,7 @@ func TestGetProjects_Success(t *testing.T) {
 		t.Errorf("Expected command to be 'gcloud', got %s", lastCall.Name)
 	}
 
-	expectedArgs := []string{"projects", "list", "--filter", "parent.id:12345", "--format", "csv[no-heading](projectId)"}
+	expectedArgs := []string{"projects", "list", "--filter", "parent.id:12345", "--format", "csv[no-heading](projectId,name)"}
 	if len(lastCall.Args) != len(expectedArgs) {
 		t.Errorf("Expected %d args, got %d", len(expectedArgs), len(lastCall.Args))
 	}
@@ -95,7 +100,7 @@ func TestGetProjects_CommandError(t *testing.T) {
 
 func TestGetProjects_WithNewlines(t *testing.T) {
 	mockExec := &MockExecutor{
-		MockOutput: []byte("project1\n\nproject2\n\n\nproject3\n"),
+		MockOutput: []byte("project1,Project 1\n\nproject2,Project 2\n\n\nproject3,Project 3\n"),
 		MockError:  nil,
 	}
 
@@ -106,14 +111,18 @@ func TestGetProjects_WithNewlines(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	expected := []string{"project1", "project2", "project3"}
+	expected := []models.Entry{
+		{Type: models.EntryTypeProject, Id: "Project 1", Name: "project1"},
+		{Type: models.EntryTypeProject, Id: "Project 2", Name: "project2"},
+		{Type: models.EntryTypeProject, Id: "Project 3", Name: "project3"},
+	}
 	if len(projects) != len(expected) {
 		t.Errorf("Expected %d projects, got %d", len(expected), len(projects))
 	}
 
 	for i, project := range projects {
-		if project != expected[i] {
-			t.Errorf("Expected project[%d] to be %s, got %s", i, expected[i], project)
+		if project.Id != expected[i].Id || project.Name != expected[i].Name {
+			t.Errorf("Expected project[%d] to be %+v, got %+v", i, expected[i], project)
 		}
 	}
 }

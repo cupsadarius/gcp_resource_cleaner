@@ -11,9 +11,7 @@ type Tree struct {
 }
 
 func NewTree() *Tree {
-	return &Tree{
-		Root: NewNode("root", []string{"root"}),
-	}
+	return &Tree{}
 }
 
 func (t *Tree) PostOrderTraversal(node *Node) []Entry {
@@ -27,9 +25,9 @@ func (t *Tree) PostOrderTraversal(node *Node) []Entry {
 		result = append(result, t.PostOrderTraversal(node)...)
 	}
 	for _, child := range node.Values {
-		result = append(result, *NewEntry(child, EntryTypeProject))
+		result = append(result, child)
 	}
-	result = append(result, *NewEntry(node.Id, EntryTypeFolder))
+	result = append(result, *node.Current)
 
 	return result
 }

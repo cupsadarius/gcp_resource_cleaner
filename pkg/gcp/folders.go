@@ -4,10 +4,11 @@ import (
 	"context"
 	"strings"
 
+	"github.com/cupsadarius/gcp_resource_cleaner/models"
 	"github.com/cupsadarius/gcp_resource_cleaner/pkg/logger"
 )
 
-func GetFolders(rootCtx context.Context, rootFolderId string, executor CommandExecutor) ([]string, error) {
+func GetFolders(rootCtx context.Context, rootFolderId string, executor CommandExecutor) ([]models.Entry, error) {
 	ctx, cancelFunc := context.WithCancel(rootCtx)
 	defer cancelFunc()
 	log := logger.New("gcp", "GetFolders")
@@ -20,10 +21,10 @@ func GetFolders(rootCtx context.Context, rootFolderId string, executor CommandEx
 			"--folder",
 			rootFolderId,
 			"--format",
-			"csv[no-heading](ID)",
+			"csv[no-heading](ID,DISPLAY_NAME)",
 		},
 	})
-	out, err := executor.ExecuteCommand(ctx, "gcloud", "resource-manager", "folders", "list", "--folder", rootFolderId, "--format", "csv[no-heading](ID)")
+	out, err := executor.ExecuteCommand(ctx, "gcloud", "resource-manager", "folders", "list", "--folder", rootFolderId, "--format", "csv[no-heading](ID,DISPLAY_NAME)")
 	if err != nil {
 		log.Error("Failed to run command", err)
 		return nil, err
@@ -35,11 +36,14 @@ func GetFolders(rootCtx context.Context, rootFolderId string, executor CommandEx
 		})
 		return nil, nil
 	}
-	result := make([]string, 0)
+	result := make([]models.Entry, 0)
 	trimmed := strings.Trim(string(out), "\n")
 	for line := range strings.SplitSeq(trimmed, "\n") {
 		if line != "" {
-			result = append(result, strings.Trim(line, "\n"))
+			vals := strings.Split(strings.Trim(line, "\n"), ",")
+			entry := models.NewEntry(vals[0], vals[1], models.EntryTypeFolder)
+
+			result = append(result, *entry)
 		}
 	}
 

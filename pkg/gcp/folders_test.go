@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/cupsadarius/gcp_resource_cleaner/models"
 	"github.com/cupsadarius/gcp_resource_cleaner/pkg/logger"
 )
 
@@ -19,7 +20,7 @@ func init() {
 
 func TestGetFolders_Success(t *testing.T) {
 	mockExec := &MockExecutor{
-		MockOutput: []byte("folder1\nfolder2\nfolder3\n"),
+		MockOutput: []byte("folder1,Folder 1\nfolder2,Folder 2\nfolder3,Folder 3\n"),
 		MockError:  nil,
 	}
 
@@ -30,14 +31,18 @@ func TestGetFolders_Success(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	expected := []string{"folder1", "folder2", "folder3"}
+	expected := []models.Entry{
+		{Type: models.EntryTypeFolder, Id: "folder1", Name: "Folder 1"},
+		{Type: models.EntryTypeFolder, Id: "folder2", Name: "Folder 2"},
+		{Type: models.EntryTypeFolder, Id: "folder3", Name: "Folder 3"},
+	}
 	if len(folders) != len(expected) {
 		t.Errorf("Expected %d folders, got %d", len(expected), len(folders))
 	}
 
 	for i, folder := range folders {
-		if folder != expected[i] {
-			t.Errorf("Expected folder[%d] to be %s, got %s", i, expected[i], folder)
+		if folder.Id != expected[i].Id || folder.Name != expected[i].Name {
+			t.Errorf("Expected folder[%d] to be %+v, got %+v", i, expected[i], folder)
 		}
 	}
 
@@ -51,7 +56,7 @@ func TestGetFolders_Success(t *testing.T) {
 		t.Errorf("Expected command to be 'gcloud', got %s", lastCall.Name)
 	}
 
-	expectedArgs := []string{"resource-manager", "folders", "list", "--folder", "12345", "--format", "csv[no-heading](ID)"}
+	expectedArgs := []string{"resource-manager", "folders", "list", "--folder", "12345", "--format", "csv[no-heading](ID,DISPLAY_NAME)"}
 	if len(lastCall.Args) != len(expectedArgs) {
 		t.Errorf("Expected %d args, got %d", len(expectedArgs), len(lastCall.Args))
 	}
@@ -111,7 +116,7 @@ func TestGetFolders_CommandError(t *testing.T) {
 
 func TestGetFolders_WithNewlines(t *testing.T) {
 	mockExec := &MockExecutor{
-		MockOutput: []byte("folder1\n\nfolder2\n\n\nfolder3\n"),
+		MockOutput: []byte("folder1,Folder 1\n\nfolder2,Folder 2\n\n\nfolder3,Folder 3\n"),
 		MockError:  nil,
 	}
 
@@ -122,21 +127,25 @@ func TestGetFolders_WithNewlines(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	expected := []string{"folder1", "folder2", "folder3"}
+	expected := []models.Entry{
+		{Type: models.EntryTypeFolder, Id: "folder1", Name: "Folder 1"},
+		{Type: models.EntryTypeFolder, Id: "folder2", Name: "Folder 2"},
+		{Type: models.EntryTypeFolder, Id: "folder3", Name: "Folder 3"},
+	}
 	if len(folders) != len(expected) {
 		t.Errorf("Expected %d folders, got %d", len(expected), len(folders))
 	}
 
 	for i, folder := range folders {
-		if folder != expected[i] {
-			t.Errorf("Expected folder[%d] to be %s, got %s", i, expected[i], folder)
+		if folder.Id != expected[i].Id || folder.Name != expected[i].Name {
+			t.Errorf("Expected folder[%d] to be %+v, got %+v", i, expected[i], folder)
 		}
 	}
 }
 
 func TestGetFolders_SingleFolder(t *testing.T) {
 	mockExec := &MockExecutor{
-		MockOutput: []byte("single-folder\n"),
+		MockOutput: []byte("single-folder,Single Folder\n"),
 		MockError:  nil,
 	}
 
@@ -147,19 +156,19 @@ func TestGetFolders_SingleFolder(t *testing.T) {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	expected := []string{"single-folder"}
+	expected := models.Entry{Type: models.EntryTypeFolder, Id: "single-folder", Name: "Single Folder"}
 	if len(folders) != 1 {
 		t.Errorf("Expected 1 folder, got %d", len(folders))
 	}
 
-	if folders[0] != expected[0] {
-		t.Errorf("Expected folder to be %s, got %s", expected[0], folders[0])
+	if folders[0].Id != expected.Id || folders[0].Name != expected.Name {
+		t.Errorf("Expected folder to be %+v, got %+v", expected, folders[0])
 	}
 }
 
 func TestGetFolders_DifferentParentFolder(t *testing.T) {
 	mockExec := &MockExecutor{
-		MockOutput: []byte("child-folder\n"),
+		MockOutput: []byte("child-folder,Child Folder\n"),
 		MockError:  nil,
 	}
 
