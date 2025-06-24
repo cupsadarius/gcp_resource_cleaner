@@ -84,9 +84,6 @@ func Init(cfg Config) {
 
 	zerolog.SetGlobalLevel(stringLevelToZerologLevel(cfg.Level))
 
-	log.Info().Str("log_level", cfg.Level).
-		Str("log_format", cfg.Format).
-		Msg("Logger level")
 }
 
 func stringLevelToZerologLevel(level string) zerolog.Level {
