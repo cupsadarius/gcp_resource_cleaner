@@ -19,10 +19,9 @@ This approach prevents the common issue of trying to delete folders that still c
 - **Recursive Resource Discovery**: Automatically finds all projects and subfolders within a given folder hierarchy
 - **Pretty Tree Visualization**: Visual representation of the resource hierarchy before deletion
 - **Safe Bottom-Up Deletion**: Deletes resources in the correct order to avoid dependency conflicts
+- **Concurrent Processing**: Optional concurrent discovery and deletion for improved performance on large hierarchies
 - **Dry-Run Mode**: Preview what would be deleted without making any actual changes
 - **Configurable Logging**: Adjustable log levels from silent operation to detailed debugging
-- **Flexible Log Formats**: Choose between human-readable pretty format or machine-readable JSON
-- **Comprehensive Logging**: Detailed debug output for troubleshooting and verification
 - **Health Checks**: Validates that required tools (gcloud CLI) are properly configured
 - **Signal Handling**: Graceful shutdown on interruption
 
@@ -80,7 +79,7 @@ gcp_resource_cleaner delete --folder-id <folder-id> --dry-run --log-level debug
 
 Example:
 ```bash
-gcp_resource_cleaner delete --folder-id 123456789012 --dry-run --log-level debug
+gcp_resource_cleaner delete --folder-id <foleder-id> --dry-run --log-level debug
 ```
 
 ### Execute Deletion with Minimal Logging
@@ -89,25 +88,39 @@ After reviewing the dry-run output, proceed with actual deletion:
 gcp_resource_cleaner delete --folder-id <folder-id> --log-level warn
 ```
 
+### Concurrent Processing
+For large folder hierarchies, enable concurrent processing to improve performance:
+
+```bash
+# Enable concurrency with default limit (5 concurrent operations)
+gcp_resource_cleaner delete --folder-id <folder-id> --concurrency --dry-run
+
+# Enable concurrency with custom limit
+gcp_resource_cleaner delete --folder-id <folder-id> --concurrency --concurrency-limit 10 --dry-run
+
+# High concurrency for very large hierarchies
+gcp_resource_cleaner delete --folder-id <folder-id> --concurrency --concurrency-limit 20 --dry-run
+```
+
 ### Advanced Usage Examples
 ```bash
 # Just view the resource tree structure
-gcp_resource_cleaner print --folder-id 123456789012 --log-level info
+gcp_resource_cleaner print --folder-id <folder-id> --log-level info
 
-# View tree with detailed discovery logging
-gcp_resource_cleaner print --folder-id 123456789012 --log-level debug
+# View tree with detailed discovery logging and concurrency
+gcp_resource_cleaner print --folder-id <folder-id> --log-level debug --concurrency --concurrency-limit 8
 
-# Detailed debugging with pretty console output
-gcp_resource_cleaner delete --folder-id 123456789012 --dry-run --log-level trace --log-format pretty
+# Detailed debugging with pretty console output and concurrency
+gcp_resource_cleaner delete --folder-id <folder-id> --dry-run --log-level trace --log-format pretty --concurrency
 
-# Production deletion with JSON logging for log aggregation
-gcp_resource_cleaner delete --folder-id 123456789012 --log-level error --log-format json
+# Production deletion with JSON logging and moderate concurrency for log aggregation
+gcp_resource_cleaner delete --folder-id <folder-id> --log-level error --log-format json --concurrency --concurrency-limit 10
 
-# Silent operation (errors only)
-gcp_resource_cleaner delete --folder-id 123456789012 --log-level error
+# Silent operation with maximum safe concurrency (errors only)
+gcp_resource_cleaner delete --folder-id <folder-id> --log-level error --concurrency --concurrency-limit 15
 
-# Maximum verbosity for troubleshooting
-gcp_resource_cleaner delete --folder-id 123456789012 --dry-run --log-level trace
+# Maximum verbosity with concurrency for troubleshooting large hierarchies
+gcp_resource_cleaner delete --folder-id <folder-id> --dry-run --log-level trace --concurrency --concurrency-limit 5
 ```
 
 ### Get Version Information
@@ -120,8 +133,8 @@ gcp_resource_cleaner version
 | Command | Description | Flags |
 |---------|-------------|-------|
 | `check-health` | Validates gcloud CLI installation and authentication | `--log-level`, `--log-format` |
-| `print` | Displays the resource tree structure without any deletion operations | `--folder-id` (required), `--log-level`, `--log-format` |
-| `delete` | Recursively deletes folders and projects | `--folder-id` (required), `--dry-run`, `--log-level`, `--log-format` |
+| `print` | Displays the resource tree structure without any deletion operations | `--folder-id` (required), `--log-level`, `--log-format`, `--concurrency`, `--concurrency-limit` |
+| `delete` | Recursively deletes folders and projects | `--folder-id` (required), `--dry-run`, `--log-level`, `--log-format`, `--concurrency`, `--concurrency-limit` |
 | `version` | Shows application version and Git commit SHA | `--log-level`, `--log-format` |
 
 ## Flag Reference
@@ -132,37 +145,25 @@ gcp_resource_cleaner version
 | `--dry-run` | bool | false | Preview mode - shows what would be deleted without making changes (delete command only) |
 | `--log-level` | string | "info" | Log verbosity level: trace, debug, info, warn, error, fatal, panic |
 | `--log-format` | string | "pretty" | Log output format: pretty (human-readable) or json (machine-readable) |
+| `--concurrency` | bool | false | Enable concurrent processing for improved performance |
+| `--concurrency-limit` | int | 5 | Maximum number of concurrent operations (only applies when `--concurrency` is enabled) |
 
-## Log Levels Guide
 
-Choose the appropriate log level based on your needs:
+## Performance Optimization
 
-- **`error`**: Only show errors (recommended for production/automated scripts)
-- **`warn`**: Show warnings and errors (recommended for normal operation)
-- **`info`**: Show general information, warnings, and errors (default)
-- **`debug`**: Show detailed operation info (recommended for troubleshooting)
-- **`trace`**: Maximum verbosity, show all internal operations
+### Sequential vs Concurrent Processing
 
-## Example Workflow
+**Sequential Processing (default)**:
+- Processes one folder at a time
+- Lower memory usage
+- Easier to debug
+- Recommended for small to medium hierarchies
 
-```bash
-# 1. Verify system health with detailed output
-gcp_resource_cleaner check-health --log-level debug
-
-# 2. Discover and visualize the resource tree structure
-gcp_resource_cleaner print --folder-id 123456789012 --log-level info
-
-# 3. Preview the deletion plan with dry-run
-gcp_resource_cleaner delete --folder-id 123456789012 --dry-run --log-level info
-
-# 4. Get detailed information for complex hierarchies
-gcp_resource_cleaner delete --folder-id 123456789012 --dry-run --log-level debug
-
-# 5. Review the tree visualization and deletion plan carefully
-
-# 6. Execute with minimal logging for clean output
-gcp_resource_cleaner delete --folder-id 123456789012 --log-level warn
-```
+**Concurrent Processing**:
+- Processes multiple folders simultaneously
+- Higher throughput for large hierarchies
+- Increased memory usage
+- May hit API rate limits if set too high
 
 ## Safety Features
 
@@ -170,6 +171,7 @@ gcp_resource_cleaner delete --folder-id 123456789012 --log-level warn
 - **Tree visualization** shows complete resource hierarchy before deletion
 - **Bottom-up traversal** ensures safe deletion order
 - **Configurable logging** provides appropriate verbosity for different use cases
+- **Concurrent processing** with rate limiting to respect API limits
 - **Signal handling** allows graceful cancellation
 - **Error handling** stops on failures to prevent partial deletions
 
@@ -180,7 +182,7 @@ The tool is structured with clear separation of concerns:
 - `internal/`: Core application logic and orchestration
 - `models/`: Data structures for tree representation and resource entries
 - `pkg/cli/`: Command-line interface handling with configurable logging
-- `pkg/gcp/`: GCP API interactions via gcloud CLI
+- `pkg/gcp/`: GCP API interactions via gcloud CLI with concurrent execution support
 - `pkg/logger/`: Structured logging with zerolog (configurable levels and formats)
 
 ## Troubleshooting
@@ -203,26 +205,16 @@ The tool is structured with clear separation of concerns:
 - Check logs for failed deletions of child resources with `--log-level debug`
 - Some resources may require manual cleanup (e.g., billing accounts, liens)
 
-### Debug Logging
+**API Rate Limiting with Concurrency**
+- Reduce `--concurrency-limit` value (try 3-5 for moderate hierarchies)
+- Add delays between operations by using sequential mode temporarily
+- Check GCP quotas and limits for your project
+- Use `--log-level debug` to see timing of API calls
 
-The tool provides configurable debug output to help troubleshoot issues:
-
-```bash
-# See all gcloud commands being executed
-gcp_resource_cleaner delete --folder-id 123456789012 --dry-run --log-level trace
-
-# See resource discovery and tree building process
-gcp_resource_cleaner delete --folder-id 123456789012 --dry-run --log-level debug
-
-# Generate machine-readable logs for analysis
-gcp_resource_cleaner delete --folder-id 123456789012 --dry-run --log-level debug --log-format json
-```
-
-Debug output includes:
-- Resource discovery operations and gcloud command execution
-- Tree structure building and visualization
-- Deletion sequence planning and execution results
-- Detailed error information with context
+**High Memory Usage with Concurrency**
+- Reduce `--concurrency-limit` value
+- Process smaller subsections of the hierarchy
+- Monitor system resources and adjust accordingly
 
 ## Contributing
 
@@ -230,8 +222,9 @@ Debug output includes:
 2. Create a feature branch
 3. Make your changes
 4. Run tests: `make test`
-5. Test with different log levels: `--log-level debug` and `--log-level trace`
-6. Submit a pull request
+5. Test with different concurrency settings: `--concurrency --concurrency-limit 3` and `--concurrency --concurrency-limit 10`
+6. Test with different log levels: `--log-level debug` and `--log-level trace`
+7. Submit a pull request
 
 ## License
 
@@ -244,3 +237,10 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - **Folders**: Are permanently deleted and **cannot be recovered**
 - Always use `--dry-run` first and review the tree visualization before proceeding with actual deletion
 - Use appropriate log levels (`--log-level debug`) when investigating issues or validating complex hierarchies
+- Start with lower concurrency limits and increase gradually based on your hierarchy size and network conditions
+
+⚠️ **Concurrency Considerations:**
+- **Start conservatively**: Begin with `--concurrency-limit 3-5` and increase based on performance
+- **Monitor API limits**: GCP has rate limits that may be hit with high concurrency
+- **Test thoroughly**: Always test concurrent operations with `--dry-run` before actual deletion
+- **Debug with lower concurrency**: Use `--concurrency-limit 1-3` with `--log-level debug` for troubleshooting

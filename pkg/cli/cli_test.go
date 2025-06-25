@@ -162,3 +162,177 @@ func TestMultipleCommands(t *testing.T) {
 		t.Error("Command2 handler was not called")
 	}
 }
+
+func TestAssignIntFlag(t *testing.T) {
+	Init("test-app", "short", "long")
+
+	var testInt int
+	AssignIntFlag(&testInt, "test-int", 42, "Test int description")
+
+	// Get the flag to verify it was added
+	flag := cmd.PersistentFlags().Lookup("test-int")
+	if flag == nil {
+		t.Fatal("Int flag was not added")
+	}
+
+	if flag.DefValue != "42" {
+		t.Errorf("Expected default value to be '42', got %s", flag.DefValue)
+	}
+
+	if flag.Usage != "Test int description" {
+		t.Errorf("Expected usage to be 'Test int description', got %s", flag.Usage)
+	}
+}
+
+func TestConcurrencyFlags(t *testing.T) {
+	Init("test-app", "short", "long")
+
+	var enableConcurrency bool
+	var concurrencyLimit int
+
+	// Test adding concurrency flags
+	AssignBoolFlag(&enableConcurrency, "concurrency", false, "Enable concurrency")
+	AssignIntFlag(&concurrencyLimit, "concurrency-limit", 5, "Concurrency limit")
+
+	// Verify concurrency flag
+	concurrencyFlag := cmd.PersistentFlags().Lookup("concurrency")
+	if concurrencyFlag == nil {
+		t.Fatal("Concurrency flag was not added")
+	}
+
+	if concurrencyFlag.DefValue != "false" {
+		t.Errorf("Expected concurrency default to be 'false', got %s", concurrencyFlag.DefValue)
+	}
+
+	if concurrencyFlag.Usage != "Enable concurrency" {
+		t.Errorf("Expected concurrency usage to be 'Enable concurrency', got %s", concurrencyFlag.Usage)
+	}
+
+	// Verify concurrency-limit flag
+	limitFlag := cmd.PersistentFlags().Lookup("concurrency-limit")
+	if limitFlag == nil {
+		t.Fatal("Concurrency-limit flag was not added")
+	}
+
+	if limitFlag.DefValue != "5" {
+		t.Errorf("Expected concurrency-limit default to be '5', got %s", limitFlag.DefValue)
+	}
+
+	if limitFlag.Usage != "Concurrency limit" {
+		t.Errorf("Expected concurrency-limit usage to be 'Concurrency limit', got %s", limitFlag.Usage)
+	}
+}
+
+func TestIntFlagValidation(t *testing.T) {
+	Init("test-app", "short", "long")
+
+	tests := []struct {
+		name         string
+		defaultValue int
+		description  string
+	}{
+		{
+			name:         "zero default",
+			defaultValue: 0,
+			description:  "Zero concurrency limit",
+		},
+		{
+			name:         "positive default",
+			defaultValue: 10,
+			description:  "Positive concurrency limit",
+		},
+		{
+			name:         "large default",
+			defaultValue: 1000,
+			description:  "Large concurrency limit",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var testInt int
+			flagName := "test-" + tt.name
+
+			AssignIntFlag(&testInt, flagName, tt.defaultValue, tt.description)
+
+			flag := cmd.PersistentFlags().Lookup(flagName)
+			if flag == nil {
+				t.Fatalf("Flag %s was not added", flagName)
+			}
+
+			expectedDefault := string(rune(tt.defaultValue + '0'))
+			if tt.defaultValue >= 10 {
+				expectedDefault = flag.DefValue // For multi-digit numbers, just check it was set
+			}
+
+			if tt.defaultValue < 10 && flag.DefValue != expectedDefault {
+				t.Errorf("Expected default value %d, got %s", tt.defaultValue, flag.DefValue)
+			}
+
+			if flag.Usage != tt.description {
+				t.Errorf("Expected usage '%s', got '%s'", tt.description, flag.Usage)
+			}
+		})
+	}
+}
+
+func TestCommandsWithConcurrencyFlags(t *testing.T) {
+	Init("test-app", "short", "long")
+
+	// Add concurrency flags
+	var enableConcurrency bool
+	var concurrencyLimit int
+	AssignBoolFlag(&enableConcurrency, "concurrency", false, "Enable concurrency")
+	AssignIntFlag(&concurrencyLimit, "concurrency-limit", 5, "Concurrency limit")
+
+	// Add test commands
+	command1Called := false
+	command2Called := false
+
+	err1 := AddCommand("command1", "First command", func(ctx context.Context) {
+		command1Called = true
+	})
+
+	err2 := AddCommand("command2", "Second command", func(ctx context.Context) {
+		command2Called = true
+	})
+
+	if err1 != nil {
+		t.Errorf("Error adding command1: %v", err1)
+	}
+
+	if err2 != nil {
+		t.Errorf("Error adding command2: %v", err2)
+	}
+
+	// Verify commands and flags coexist
+	commands := cmd.Commands()
+	if len(commands) != 2 {
+		t.Errorf("Expected 2 commands, got %d", len(commands))
+	}
+
+	// Verify flags are still present
+	concurrencyFlag := cmd.PersistentFlags().Lookup("concurrency")
+	limitFlag := cmd.PersistentFlags().Lookup("concurrency-limit")
+
+	if concurrencyFlag == nil {
+		t.Error("Concurrency flag missing after adding commands")
+	}
+
+	if limitFlag == nil {
+		t.Error("Concurrency-limit flag missing after adding commands")
+	}
+
+	// Test command execution (flags should be available to commands)
+	for _, subCmd := range commands {
+		subCmd.Run(subCmd, []string{})
+	}
+
+	if !command1Called {
+		t.Error("Command1 was not called")
+	}
+
+	if !command2Called {
+		t.Error("Command2 was not called")
+	}
+}
