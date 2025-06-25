@@ -133,28 +133,47 @@ func deleteResources(rootCtx context.Context) {
 		"traversed": traversed,
 	})
 
-	wg := sync.WaitGroup{}
+	projects := make([]models.Entry, 0)
+	folders := make([]models.Entry, 0)
 
 	for _, entry := range traversed {
-		wg.Add(1)
-		go func(entry models.Entry) {
-			defer wg.Done()
-			switch entry.Type {
-			case models.EntryTypeProject:
-				err := gcp.DeleteProject(ctx, entry.Id, dryRun, executor)
+		switch entry.Type {
+		case models.EntryTypeProject:
+			projects = append(projects, entry)
+		case models.EntryTypeFolder:
+			folders = append(folders, entry)
+		}
+	}
+
+	if enableConcurrency {
+		var wg sync.WaitGroup
+
+		for _, project := range projects {
+			wg.Add(1)
+			go func(p models.Entry) {
+				defer wg.Done()
+				err := gcp.DeleteProject(ctx, p.Id, dryRun, executor)
 				if err != nil {
 					log.Error("Failed to delete project", err)
 				}
-			case models.EntryTypeFolder:
-				err := gcp.DeleteFolder(ctx, entry.Id, dryRun, executor)
-				if err != nil {
-					log.Error("Failed to delete folder", err)
-				}
+			}(project)
+		}
+		wg.Wait()
+	} else {
+		for _, project := range projects {
+			err := gcp.DeleteProject(ctx, project.Id, dryRun, executor)
+			if err != nil {
+				log.Error("Failed to delete project", err)
 			}
-		}(entry)
+		}
 	}
 
-	wg.Wait()
+	for _, folder := range folders {
+		err := gcp.DeleteFolder(ctx, folder.Id, dryRun, executor)
+		if err != nil {
+			log.Error("Failed to delete folder", err)
+		}
+	}
 
 }
 
