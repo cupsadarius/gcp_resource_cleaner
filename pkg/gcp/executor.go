@@ -19,6 +19,30 @@ func (g *GCloudExecutor) ExecuteCommand(ctx context.Context, name string, args .
 	return cmd.CombinedOutput()
 }
 
+type ConcurrentExecutor struct {
+	semaphore chan struct{}
+}
+
+func NewConcurrentExecutor(maxConcurrent int) *ConcurrentExecutor {
+	return &ConcurrentExecutor{
+		semaphore: make(chan struct{}, maxConcurrent),
+	}
+}
+
+func (ce *ConcurrentExecutor) ExecuteCommand(ctx context.Context, name string, args ...string) ([]byte, error) {
+	select {
+	case ce.semaphore <- struct{}{}:
+		defer func() { <-ce.semaphore }()
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+
+	cmd := exec.CommandContext(ctx, name, args...)
+	output, err := cmd.CombinedOutput()
+
+	return output, err
+}
+
 // MockExecutor is a test implementation that returns predefined responses
 type MockExecutor struct {
 	MockOutput []byte

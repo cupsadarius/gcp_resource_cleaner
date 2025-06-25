@@ -50,6 +50,11 @@ func AssignBoolFlag(target *bool, name string, defaultValue bool, description st
 	cmd.PersistentFlags().BoolVar(target, name, defaultValue, description)
 }
 
+// AssignIntFlag set a bool flag to CLI service
+func AssignIntFlag(target *int, name string, defaultValue int, description string) {
+	cmd.PersistentFlags().IntVar(target, name, defaultValue, description)
+}
+
 // Run runs the CLI service with a context attached
 func Run(ctx context.Context) error {
 	return cmd.ExecuteContext(ctx)

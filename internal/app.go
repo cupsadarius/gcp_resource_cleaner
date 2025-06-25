@@ -25,13 +25,22 @@ var rootFolderId string
 var dryRun bool
 var logLevel string
 var logFormat string
+var enableConcurrency bool
+var concurrecyLimit int
 
-// Create the real executor
-var executor gcp.CommandExecutor = &gcp.GCloudExecutor{}
+// Add this function to app.go
+func createExecutor() gcp.CommandExecutor {
+	log := logger.New(appID, "createExecutor")
 
-// Allow test injection
-func SetExecutor(exec gcp.CommandExecutor) {
-	executor = exec
+	if enableConcurrency {
+		log.DebugWithExtra("Creating concurrent executor", map[string]any{
+			"maxConcurrent": concurrecyLimit,
+		})
+		return gcp.NewConcurrentExecutor(concurrecyLimit)
+	} else {
+		log.Debug("Creating sequential executor")
+		return &gcp.GCloudExecutor{} // Your original executor
+	}
 }
 
 func Run(ctx context.Context) error {
@@ -44,6 +53,8 @@ func Run(ctx context.Context) error {
 	cli.AssignStringFlag(&logLevel, "log-level", "info", "Log level (trace, debug, info, warn, error, fatal, panic)")
 	cli.AssignStringFlag(&logFormat, "log-format", "pretty", "Log format (pretty, json)")
 	cli.AssignBoolFlag(&dryRun, "dry-run", false, "Dry run mode")
+	cli.AssignBoolFlag(&enableConcurrency, "concurrency", false, "Enable concurrency")
+	cli.AssignIntFlag(&concurrecyLimit, "concurrency-limit", 5, "Concurrency limit")
 
 	return cli.Run(ctx)
 } // Updated helper function with format support
@@ -77,6 +88,7 @@ func validateLogFormat(format string) bool {
 
 func checkHealth(rootCtx context.Context) {
 	_ = initLogger("info")
+	executor := createExecutor()
 	gcp.CheckHealth(rootCtx, executor)
 }
 
@@ -92,6 +104,7 @@ func printTree(rootCtx context.Context) {
 		return
 	}
 
+	executor := createExecutor()
 	tree := getStructure(ctx, rootFolderId, executor)
 	tree.Print()
 
@@ -109,6 +122,7 @@ func deleteResources(rootCtx context.Context) {
 		return
 	}
 
+	executor := createExecutor()
 	tree := getStructure(ctx, rootFolderId, executor)
 
 	tree.Print()
