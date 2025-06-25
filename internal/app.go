@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/cupsadarius/gcp_resource_cleaner/models"
 	"github.com/cupsadarius/gcp_resource_cleaner/pkg/cli"
@@ -132,20 +133,28 @@ func deleteResources(rootCtx context.Context) {
 		"traversed": traversed,
 	})
 
+	wg := sync.WaitGroup{}
+
 	for _, entry := range traversed {
-		switch entry.Type {
-		case models.EntryTypeProject:
-			err := gcp.DeleteProject(ctx, entry.Id, dryRun, executor)
-			if err != nil {
-				log.Error("Failed to delete project", err)
+		wg.Add(1)
+		go func(entry models.Entry) {
+			defer wg.Done()
+			switch entry.Type {
+			case models.EntryTypeProject:
+				err := gcp.DeleteProject(ctx, entry.Id, dryRun, executor)
+				if err != nil {
+					log.Error("Failed to delete project", err)
+				}
+			case models.EntryTypeFolder:
+				err := gcp.DeleteFolder(ctx, entry.Id, dryRun, executor)
+				if err != nil {
+					log.Error("Failed to delete folder", err)
+				}
 			}
-		case models.EntryTypeFolder:
-			err := gcp.DeleteFolder(ctx, entry.Id, dryRun, executor)
-			if err != nil {
-				log.Error("Failed to delete folder", err)
-			}
-		}
+		}(entry)
 	}
+
+	wg.Wait()
 
 }
 
