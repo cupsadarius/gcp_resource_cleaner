@@ -3,7 +3,7 @@ module github.com/cupsadarius/gcp_resource_cleaner
 go 1.24.4
 
 require (
-	github.com/rs/zerolog v1.34.0
+	github.com/rs/zerolog v1.35.0
 	github.com/spf13/cobra v1.10.2
 	github.com/xlab/treeprint v1.2.0
 )
